@@ -52,9 +52,11 @@ func (server *Server) Run() {
 		client := &Client{
 			conn: conn,
 		}
-
+		// Welcome message.
+		welcome := PrintWelcome()
+		client.conn.Write([]byte(welcome))
 		// Ask for pseudo and add client to server's list
-		client.conn.Write([]byte("Enter a pseudo: "))
+		client.conn.Write([]byte("[ENTER YOUR PSEUDO]: "))
 		reader := bufio.NewReader(client.conn)
 		pseudo, _ := reader.ReadString('\n')
 		client.pseudo = strings.TrimRight(pseudo, "\n")
