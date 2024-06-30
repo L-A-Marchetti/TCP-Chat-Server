@@ -28,12 +28,20 @@ type Config struct {
 	Port string
 }
 
+type Logs struct {
+	Time    string
+	Pseudo  string
+	Message string
+}
+
 func New(config *Config) *Server {
 	return &Server{
 		host: config.Host,
 		port: config.Port,
 	}
 }
+
+var historic []Logs
 
 func (server *Server) Run() {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", server.host, server.port))
@@ -42,7 +50,6 @@ func (server *Server) Run() {
 		log.Fatal(err)
 	}
 	defer listener.Close()
-
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -72,6 +79,10 @@ func (server *Server) Run() {
 }
 
 func (server *Server) handleClient(client *Client) {
+	// Display historic of the conversations.
+	for _, log := range historic {
+		client.conn.Write([]byte("[" + log.Time + "][" + log.Pseudo + "]: " + log.Message))
+	}
 	log.Printf("Client %s connected\n", client.pseudo)
 	defer func() {
 		// Remove client from server's list when client disconnects
@@ -112,6 +123,7 @@ func (server *Server) broadcastMessage(sender *Client, message string) {
 
 	if sender != nil {
 		for _, client := range server.clients {
+			historic = append(historic, Logs{time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message})
 			client.conn.Write([]byte(fmt.Sprintf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)))
 		}
 	} else {
