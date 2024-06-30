@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"sync"
-	"os"
+	"time"
 )
 
 type Server struct {
@@ -90,17 +91,17 @@ func (server *Server) handleClient(client *Client) {
 	reader := bufio.NewReader(client.conn)
 
 	// Notify other clients about new connection
-	server.broadcastMessage(nil, fmt.Sprintf("%s connected\n", client.pseudo))
+	server.broadcastMessage(nil, fmt.Sprintf("%s has joind the chat...\n", client.pseudo))
 
 	for {
 		message, err := reader.ReadString('\n')
 		if err != nil {
 			log.Printf("Client %s disconnected\n", client.pseudo)
 			// Broadcast disconnect message to remaining clients
-			server.broadcastMessage(nil, fmt.Sprintf("%s disconnected\n", client.pseudo))
+			server.broadcastMessage(nil, fmt.Sprintf("%s has left the chat...\n", client.pseudo))
 			break
 		}
-
+		client.conn.Write([]byte("\033[F")) // Erase the input line.
 		server.broadcastMessage(client, message)
 	}
 }
@@ -111,9 +112,7 @@ func (server *Server) broadcastMessage(sender *Client, message string) {
 
 	if sender != nil {
 		for _, client := range server.clients {
-			if client != sender {
-				client.conn.Write([]byte(fmt.Sprintf("%s: %s", sender.pseudo, message)))
-			}
+			client.conn.Write([]byte(fmt.Sprintf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)))
 		}
 	} else {
 		// Broadcast message to all clients (used for notifications)
@@ -127,7 +126,7 @@ func main() {
 	port := ""
 	if len(os.Args) > 2 {
 		fmt.Println("[USAGE]: ./TCPChat $port")
-		return;
+		return
 	}
 	if len(os.Args) == 1 {
 		port = "8989"
