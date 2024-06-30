@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"os"
 )
 
 type Server struct {
@@ -35,6 +36,7 @@ func New(config *Config) *Server {
 
 func (server *Server) Run() {
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", server.host, server.port))
+	log.Printf("Listening on port %s", server.port)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -120,9 +122,19 @@ func (server *Server) broadcastMessage(sender *Client, message string) {
 }
 
 func main() {
+	port := ""
+	if len(os.Args) > 2 {
+		fmt.Println("[USAGE]: ./TCPChat $port")
+		return;
+	}
+	if len(os.Args) == 1 {
+		port = "8989"
+	} else {
+		port = os.Args[1]
+	}
 	server := New(&Config{
 		Host: "localhost",
-		Port: "3333",
+		Port: port,
 	})
 	server.Run()
 }
