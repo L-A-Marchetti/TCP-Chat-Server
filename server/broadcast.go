@@ -17,6 +17,8 @@ func (server *Server) broadcastMessage(sender Client, message string) {
 		log.Printf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)
 		// Append the message to the historic.
 		historic = append(historic, Logs{time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message})
+		// Save the logs in a file.
+		SaveLogs(fmt.Sprintf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message))
 		for _, client := range server.clients {
 			// Send formatted message to each client.
 			client.conn.Write([]byte(fmt.Sprintf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)))
