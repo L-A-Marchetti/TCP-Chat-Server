@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -12,9 +13,11 @@ func (server *Server) broadcastMessage(sender Client, message string) {
 	defer server.mutex.Unlock()
 	// If sender has a pseudo, broadcast message to all clients with the sender name.
 	if sender.pseudo != "" {
+		// Host log.
+		log.Printf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)
+		// Append the message to the historic.
+		historic = append(historic, Logs{time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message})
 		for _, client := range server.clients {
-			// Append the message to the historic.
-			historic = append(historic, Logs{time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message})
 			// Send formatted message to each client.
 			client.conn.Write([]byte(fmt.Sprintf("[%s][%s]: %s", time.Now().Format("2006-01-02 15:04:05"), sender.pseudo, message)))
 		}

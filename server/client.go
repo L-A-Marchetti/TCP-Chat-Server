@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"strings"
 )
 
 func (server *Server) handleClient(client Client) {
@@ -31,6 +32,20 @@ func (server *Server) handleClient(client Client) {
 	reader := bufio.NewReader(client.conn)
 	for {
 		message, err := reader.ReadString('\n')
+		if message == "/rename\n" {
+			// Erase the input line for the client.
+			client.conn.Write([]byte("\033[F"))
+			client.conn.Write([]byte("[ENTER YOUR PSEUDO]: "))
+			reader := bufio.NewReader(client.conn)
+			pseudo, _ := reader.ReadString('\n')
+			tempPseudo := client.pseudo
+			client.pseudo = strings.TrimRight(pseudo, "\n")
+			// Host log.
+			log.Printf("%s has changed his pseudo for %s...\n", tempPseudo, client.pseudo)
+			// Broadcast disconnect message to remaining clients
+			server.broadcastMessage(Client{}, fmt.Sprintf("%s has changed his pseudo for %s...\n", tempPseudo, client.pseudo))
+			continue
+		}
 		if err != nil {
 			log.Printf("Client %s disconnected\n", client.pseudo)
 			// Broadcast disconnect message to remaining clients
